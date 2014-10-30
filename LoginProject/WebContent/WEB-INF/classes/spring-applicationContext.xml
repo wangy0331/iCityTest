@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+    xmlns:aop="http://www.springframework.org/schema/aop"  
+    xmlns:tx="http://www.springframework.org/schema/tx"  
+    xsi:schemaLocation="  
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd  
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd  
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd"
+      default-autowire="byName">  
+    <!-- Action -->  
+    <bean id="loginAction" scope="prototype" class="action.LoginAction" name="loginAction">
+    	 <property name="userServiceImpl" ref="userServiceImpl"></property> 
+    </bean>  
+    
+    <bean id="userServiceImpl" class="dao.UserDao"></bean> 
+   
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">  
+       <property name="configLocation" value="classpath:hibernate.cfg.xml">  
+       </property>  
+    </bean>
+    
+    <bean id="transactionManager"
+	class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+              <property name="sessionFactory">
+                     <ref local="sessionFactory" />
+              </property>
+       </bean>
+       <bean id="bean" class="com.ln.spring.DataImpl">
+              <property name="sessionFactory">
+                     <ref local="sessionFactory"></ref>
+              </property>
+       </bean>
+       <bean id="beanFactory"
+       class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+              <property name="transactionManager">
+                     <ref bean="transactionManager" />
+              </property>
+              <property name="target">
+                     <ref local="bean" />
+              </property>
+              <property name="transactionAttributes">
+                     <props>
+              <prop key="insert*">PROPAGATION_REQUIRED</prop>
+              <prop key="get*">PROPAGATION_REQUIRED,readOnly</prop>
+                     </props>
+              </property>
+       </bean>
+       <!--这部分则是spring的action与bean(数据)进行交互 -->
+       <bean id="LoginAction" class="action.LoginAction">
+              <property name="data">
+                     <ref bean="beanFactory" />
+              </property>
+       </bean>
+       <bean id="urlMapping"
+       class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+              <property name="mappings">
+                     <props>
+                            <prop key="/login.do">LoginAction</prop>
+                     </props>
+              </property>
+       </bean>
+    
+</beans>  
